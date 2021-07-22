@@ -3,12 +3,13 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_app_game_wood_cutter/constants/game_constants.dart'
     as constants;
+import 'package:flutter_app_game_wood_cutter/screen/result_screen.dart';
 import 'package:flutter_app_game_wood_cutter/util/game_logic.dart';
 
 class GameViewModel extends StatefulWidget {
   late final double screenWidth;
   late final double screenHeight;
-  late final GameLogic gameLogic;
+  late GameLogic gameLogic;
 
   GameViewModel({required this.screenWidth, required this.screenHeight}) {
     this.gameLogic =
@@ -20,35 +21,56 @@ class GameViewModel extends StatefulWidget {
 }
 
 class _GameViewModelState extends State<GameViewModel> {
-  double percentage = 1;
-
-  @override
-  void initState() {
-    Timer.periodic(Duration(milliseconds: 10), (timer) {
-      setState(() {
-        percentage -= (1 / (constants.PLAY_TIME_SECONDS * 100));
-      });
-      if(percentage <= 0) {
-        timer.cancel();
-
-      }
-    });
-  }
+  bool isFirst = true;
+  late double percentage;
+  late bool isGameOver;
+  late int score;
 
   @override
   Widget build(BuildContext context) {
+    if (isFirst) {
+      widget.gameLogic = GameLogic(
+          screenWidth: widget.screenWidth, screenHeight: widget.screenHeight);
+      percentage = 1;
+      score = 0;
+      isGameOver = false;
+      Timer.periodic(Duration(milliseconds: 10), (timer) async {
+        setState(() {
+          percentage -= (1 / (constants.PLAY_TIME_SECONDS * 100));
+        });
+        if (percentage <= 0 || isGameOver) {
+          timer.cancel();
+          await Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (context) => ResultPage(score: score)));
+          setState(() {
+            isFirst = true;
+          });
+        }
+      });
+      isFirst = false;
+    }
     return Scaffold(
       body: GestureDetector(
         behavior: HitTestBehavior.translucent,
-        onTapDown: (detail) {
+        onTapDown: (detail) async {
           print(detail.kind);
           setState(() {
-            bool isGameOver =
-                detail.globalPosition.dx > (widget.screenWidth / 2)
-                    ? widget.gameLogic.nextMove(Position.RIGHT)
-                    : widget.gameLogic.nextMove(Position.LEFT);
-            print(isGameOver);
+            isGameOver = detail.globalPosition.dx > (widget.screenWidth / 2)
+                ? widget.gameLogic.nextMove(Position.RIGHT)
+                : widget.gameLogic.nextMove(Position.LEFT);
           });
+          if (!isGameOver) {
+            setState(() {
+              score++;
+              if (percentage + constants.BONUS_FOR_SCORE >= 1) {
+                percentage = 1;
+              } else {
+                percentage += constants.BONUS_FOR_SCORE;
+              }
+            });
+          }
         },
         child: Stack(
           children: [
@@ -83,13 +105,9 @@ class _GameViewModelState extends State<GameViewModel> {
                             bottom:
                                 BorderSide(color: Colors.black, width: 10))),
                     width: widget.screenWidth,
-                    height: 50,
+                    height: constants.TIMER_HEIGHT,
                     child: LinearProgressIndicator(
-                      backgroundColor: HSVColor.lerp(
-                              HSVColor.fromColor(Color.fromRGBO(255, 0, 0, 1)),
-                              HSVColor.fromColor(Color.fromRGBO(0, 255, 0, 1)),
-                              percentage)!
-                          .toColor(),
+                      backgroundColor: Colors.white,
                       color: HSVColor.lerp(
                               HSVColor.fromColor(Color.fromRGBO(255, 0, 0, 1)),
                               HSVColor.fromColor(Color.fromRGBO(0, 255, 0, 1)),
@@ -98,6 +116,17 @@ class _GameViewModelState extends State<GameViewModel> {
                       value: percentage,
                     ),
                   )),
+              Center(
+                child: Center(
+                  child: Text(
+                    '$score',
+                    style: TextStyle(
+                      fontSize: 20,
+                      color: Colors.limeAccent[700],
+                    ),
+                  ),
+                ),
+              )
             ]
           ],
           fit: StackFit.loose,
