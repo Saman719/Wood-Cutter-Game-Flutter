@@ -24,8 +24,9 @@ class GameLogic {
       double left = position == Position.LEFT
           ? 0
           : (screenWidth / 2) + (constants.TRUNK_WIDTH / 2);
-      double bottom =
-          (i + 1) * (2 * constants.PLAYER_HEIGHT) + constants.FLOOR_HEIGHT;
+      double bottom = (i + 1) * (2 * constants.PLAYER_HEIGHT) +
+          constants.FLOOR_HEIGHT -
+          (constants.PLAYER_HEIGHT / 2);
       obstacles.add(Obstacle(
           width: (screenWidth / 2) - (constants.TRUNK_WIDTH / 2),
           position: position,
@@ -36,6 +37,9 @@ class GameLogic {
 
   bool nextMove(Position playerPosition) {
     player.position = playerPosition;
+    if (isGameOver()) {
+      return true;
+    }
     obstacles.forEach((obstacle) {
       obstacle.bottom -= constants.PLAYER_HEIGHT;
     });
@@ -59,8 +63,7 @@ class GameLogic {
   }
 
   bool isGameOver() {
-    if (obstacles.first.bottom ==
-            player.height + constants.FLOOR_HEIGHT &&
+    if (obstacles.first.bottom <= player.height + constants.FLOOR_HEIGHT &&
         obstacles.first.position == player.position) {
       return true;
     }
