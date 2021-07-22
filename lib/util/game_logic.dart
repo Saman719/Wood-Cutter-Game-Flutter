@@ -16,8 +16,7 @@ class GameLogic {
     this.player = Player(position: Position.LEFT);
     var initCount = (((screenHeight -
                 (constants.FLOOR_HEIGHT + constants.PLAYER_HEIGHT * 2)) /
-        (constants.PLAYER_HEIGHT *
-            2)) as double)
+            (constants.PLAYER_HEIGHT * 2)) as double)
         .toInt();
     for (int i = 0; i < initCount; i++) {
       Position position =
@@ -35,7 +34,7 @@ class GameLogic {
     }
   }
 
-  void nextMove(Position playerPosition) {
+  bool nextMove(Position playerPosition) {
     player.position = playerPosition;
     obstacles.forEach((obstacle) {
       obstacle.bottom -= constants.PLAYER_HEIGHT;
@@ -56,6 +55,16 @@ class GameLogic {
           bottom: obstacles.last.bottom + 2 * constants.PLAYER_HEIGHT,
           left: left));
     }
+    return isGameOver();
+  }
+
+  bool isGameOver() {
+    if (obstacles.first.bottom ==
+            player.height + constants.FLOOR_HEIGHT &&
+        obstacles.first.position == player.position) {
+      return true;
+    }
+    return false;
   }
 }
 

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_app_game_wood_cutter/constants/game_constants.dart'
     as constants;
@@ -18,6 +20,21 @@ class GameViewModel extends StatefulWidget {
 }
 
 class _GameViewModelState extends State<GameViewModel> {
+  double percentage = 1;
+
+  @override
+  void initState() {
+    Timer.periodic(Duration(milliseconds: 10), (timer) {
+      setState(() {
+        percentage -= (1 / (constants.PLAY_TIME_SECONDS * 100));
+      });
+      if(percentage <= 0) {
+        timer.cancel();
+
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -26,9 +43,11 @@ class _GameViewModelState extends State<GameViewModel> {
         onTapDown: (detail) {
           print(detail.kind);
           setState(() {
-            detail.globalPosition.dx > (widget.screenWidth / 2)
-                ? widget.gameLogic.nextMove(Position.RIGHT)
-                : widget.gameLogic.nextMove(Position.LEFT);
+            bool isGameOver =
+                detail.globalPosition.dx > (widget.screenWidth / 2)
+                    ? widget.gameLogic.nextMove(Position.RIGHT)
+                    : widget.gameLogic.nextMove(Position.LEFT);
+            print(isGameOver);
           });
         },
         child: Stack(
@@ -55,6 +74,31 @@ class _GameViewModelState extends State<GameViewModel> {
                   )),
             ],
             ...getGameElements(widget.gameLogic, widget),
+            ...[
+              Positioned(
+                  top: 0,
+                  child: Container(
+                    decoration: BoxDecoration(
+                        border: Border(
+                            bottom:
+                                BorderSide(color: Colors.black, width: 10))),
+                    width: widget.screenWidth,
+                    height: 50,
+                    child: LinearProgressIndicator(
+                      backgroundColor: HSVColor.lerp(
+                              HSVColor.fromColor(Color.fromRGBO(255, 0, 0, 1)),
+                              HSVColor.fromColor(Color.fromRGBO(0, 255, 0, 1)),
+                              percentage)!
+                          .toColor(),
+                      color: HSVColor.lerp(
+                              HSVColor.fromColor(Color.fromRGBO(255, 0, 0, 1)),
+                              HSVColor.fromColor(Color.fromRGBO(0, 255, 0, 1)),
+                              percentage)!
+                          .toColor(),
+                      value: percentage,
+                    ),
+                  )),
+            ]
           ],
           fit: StackFit.loose,
         ),

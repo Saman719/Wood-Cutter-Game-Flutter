@@ -9,3 +9,6 @@ const double PLAYER_WIDTH = 75;
 
 //obstacle
 const double OBSTACLE_HEIGHT = 20;
+
+//game
+const double PLAY_TIME_SECONDS = 5;
